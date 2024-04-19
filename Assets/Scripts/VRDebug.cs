@@ -26,15 +26,15 @@ public class VRDebug : MonoBehaviour
         {
             UI.transform.position = UIAnchor.transform.position;
             UI.transform.eulerAngles = new Vector3(UIAnchor.transform.eulerAngles.x, UIAnchor.transform.eulerAngles.y, 0);
-            if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))
-            {
-                Debug.Log("Right trigger pressed");
-            }
+            //if (OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger))
+            //{
+            //    Debug.Log("Right trigger pressed");
+            //}
 
-            if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
-            {
-                Debug.LogWarning("Left Tigger pressed");
-            }
+            //if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
+            //{
+            //    Debug.LogWarning("Left Tigger pressed");
+            //}
         }
     }
 }
