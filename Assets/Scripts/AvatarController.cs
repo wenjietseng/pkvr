@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class AvatarController : MonoBehaviour
 {
-    public enum AvatarMovements { Sync = 0, Delayed = 1, BrownianMotion = 2, Prerecorded = 3};
+    public enum AvatarMovements { Sync = 0, Delayed = 1, BrownianMotion = 2, Prerecorded = 3, Noise = 4};
     public AvatarMovements avatarMovements;
     public static bool switchAvatarMovement;
     public Material selectedBlue;
@@ -14,30 +14,47 @@ public class AvatarController : MonoBehaviour
     public GameObject delayedBtn;
     public GameObject bmBtn;
     public GameObject prerecordedBtn;
+    public GameObject noiseBtn;
+
     public GameObject syncAvatar;
     public GameObject asyncAvatar;
 
     [Header("Delayed")]
+    // some variables are reused in the other implementations.
     public GameObject trackingAvatar;
     public GameObject delayedAvatar;
     Transform[] allChildrenTrackedAvatar;
-    Transform[] allChildrenDelayedAvatar;
-    SkinnedMeshRenderer[] syncAvatarSMRs;
-    [Range(0.0f, 3f)]
-    public float delayedTime = 0.5f; 
+    Transform[] allChildrenAsyncAvatar;
 
-    [Header("Random Movement")]
+    SkinnedMeshRenderer[] syncAvatarSMRs;
+    SkinnedMeshRenderer[] asyncAvatarSMRs;
+    [Range(0.0f, 3f)]
+    public float delayedTime = 0.5f;
+    public GameObject delayedBtns;
+    public bool changeDelayTime;
+
+    [Header("Brownian Motion")]
     public bool isAsyncAvatar;
     bool areBonesCreated;
     public GameObject bmEffect;
+
+    [Header("Noise")]
+    public float lamda = 0.9f; // parameter lamda determines the weight of the present location in favor of the noisy virtual location.
+    public float sigma = 0.015f;
+    List<Vector3> lastFrameTrackedPos = new List<Vector3>();
+    List<Quaternion> lastFrameTrackedRot = new List<Quaternion>();
+    List<Vector3> lastFrameAsyncPos = new List<Vector3>();
+    List<Quaternion> lastFrameAsyncRot = new List<Quaternion>();
 
     void Start()
     {
         bmEffect.GetComponent<BrownianMotion>().enabled = false;
         allChildrenTrackedAvatar = trackingAvatar.GetComponentsInChildren<Transform>();
-        allChildrenDelayedAvatar = delayedAvatar.GetComponentsInChildren<Transform>();
+        allChildrenAsyncAvatar = delayedAvatar.GetComponentsInChildren<Transform>();
         syncAvatarSMRs = syncAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
+        asyncAvatarSMRs = asyncAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
         asyncAvatar.SetActive(false);
+        delayedBtns.SetActive(false);
 
     }
 
@@ -53,21 +70,23 @@ public class AvatarController : MonoBehaviour
                 delayedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 bmBtn.GetComponent<Renderer>().material = unselectedWhite;
                 prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
-
+                noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
                 asyncAvatar.SetActive(false);
+                delayedBtns.SetActive(false);
 
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
             }
             else if (avatarMovements == AvatarMovements.Delayed)
             {
-
                 syncBtn.GetComponent<Renderer>().material = unselectedWhite;
                 delayedBtn.GetComponent<Renderer>().material = selectedBlue;
                 bmBtn.GetComponent<Renderer>().material = unselectedWhite;
                 prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
+                noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
+
                 asyncAvatar.SetActive(true);
                 foreach (var t in syncAvatarSMRs) t.enabled = false;
-
+                delayedBtns.SetActive(true);
 
             }
             else if (avatarMovements == AvatarMovements.BrownianMotion)
@@ -77,7 +96,10 @@ public class AvatarController : MonoBehaviour
                 delayedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 bmBtn.GetComponent<Renderer>().material = selectedBlue;
                 prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
+                noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
+
                 asyncAvatar.SetActive(false);
+                delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
             }
             else if (avatarMovements == AvatarMovements.Prerecorded)
@@ -87,52 +109,106 @@ public class AvatarController : MonoBehaviour
                 delayedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 bmBtn.GetComponent<Renderer>().material = unselectedWhite;
                 prerecordedBtn.GetComponent<Renderer>().material = selectedBlue;
+                noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
+
                 asyncAvatar.SetActive(false);
+                delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
             }
+            else if (avatarMovements == AvatarMovements.Noise)
+            {
+                syncBtn.GetComponent<Renderer>().material = unselectedWhite;
+                delayedBtn.GetComponent<Renderer>().material = unselectedWhite;
+                bmBtn.GetComponent<Renderer>().material = unselectedWhite;
+                prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
+                noiseBtn.GetComponent<Renderer>().material = selectedBlue;
+
+                asyncAvatar.SetActive(true);
+                foreach (var t in syncAvatarSMRs) t.enabled = false;
+
+                lastFrameTrackedPos = new List<Vector3>();
+                lastFrameTrackedRot = new List<Quaternion>();
+                lastFrameAsyncPos = new List<Vector3>();
+                lastFrameAsyncRot = new List<Quaternion>();
+
+            }
         }
+
+        if (changeDelayTime)
+        {
+            changeDelayTime = false;
+            MeshRenderer[] btns = delayedBtns.GetComponentsInChildren<MeshRenderer>();
+            for (int i = 0; i < 5; i++) btns[i].material = unselectedWhite;
+            delayedBtns.transform.Find(delayedTime.ToString()).GetComponent<MeshRenderer>().material = selectedBlue;
+            StartCoroutine(HideAsyncAvatar(4f));
+        }
+
+        if (avatarMovements == AvatarMovements.Noise) NoiseMovement(sigma, lamda);
 
         /// <summary>
         /// below is for brownian movement, need to tweak the values and polish code
         /// </summary>
-        //if (!areBonesCreated)
-        //{
-        //    GameObject bonesGO = GameObject.Find("Bones");
-        //    bmEffect.transform.SetParent(bonesGO.transform);
-        //    GameObject.Find("FullBody_LeftHandPalm").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandWrist").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandThumbProximal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandThumbDistal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandThumbTip").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandIndexProximal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandIndexIntermediate").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandIndexDistal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandIndexTip").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandMiddleProximal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandMiddleDistal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandMiddleTip").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandRingMetacarpal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandRingProximal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandRingIntermediate").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandRingDistal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandRingTip").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandLittleProximal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandLittleIntermediate").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandLittleDistal").transform.SetParent(bmEffect.transform);
-        //    GameObject.Find("FullBody_LeftHandLittleTip").transform.SetParent(bmEffect.transform);
-        //    Debug.LogWarning("Bones are found");
-        //    areBonesCreated = true;
-        //}
+            //if (!areBonesCreated)
+            //{
+            //    GameObject bonesGO = GameObject.Find("Bones");
+            //    bmEffect.transform.SetParent(bonesGO.transform);
+            //    GameObject.Find("FullBody_LeftHandPalm").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandWrist").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandThumbProximal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandThumbDistal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandThumbTip").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandIndexProximal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandIndexIntermediate").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandIndexDistal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandIndexTip").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandMiddleProximal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandMiddleDistal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandMiddleTip").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandRingMetacarpal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandRingProximal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandRingIntermediate").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandRingDistal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandRingTip").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandLittleProximal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandLittleIntermediate").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandLittleDistal").transform.SetParent(bmEffect.transform);
+            //    GameObject.Find("FullBody_LeftHandLittleTip").transform.SetParent(bmEffect.transform);
+            //    Debug.LogWarning("Bones are found");
+            //    areBonesCreated = true;
+            //}
     }
 
     private void LateUpdate()
     {
         if (avatarMovements == AvatarMovements.Delayed) StartCoroutine(DelayedAvatar(delayedTime));
+        if (avatarMovements == AvatarMovements.Noise)
+        {
+            foreach (var t in allChildrenTrackedAvatar)
+            {
+                lastFrameTrackedPos.Add(t.position);
+            }
+
+            foreach (var t in allChildrenAsyncAvatar)
+            {
+                lastFrameAsyncPos.Add(t.position);
+            }
+        }
+    }
+
+    private IEnumerator HideAsyncAvatar(float _duration)
+    {
+        foreach (var t in asyncAvatarSMRs) t.enabled = false;
+
+
+        yield return new WaitForSeconds(_duration);
+        foreach (var t in asyncAvatarSMRs) t.enabled = true;
+
+        yield break;
     }
 
     private IEnumerator DelayedAvatar(float _duration=0f)
@@ -150,11 +226,28 @@ public class AvatarController : MonoBehaviour
 
         for (int i = 0; i < allChildrenTrackedAvatar.Length; i++)
         {
-            allChildrenDelayedAvatar[i].position = thisFramePos[i];
-            allChildrenDelayedAvatar[i].rotation = thisFrameRot[i];
+            allChildrenAsyncAvatar[i].position = thisFramePos[i];
+            allChildrenAsyncAvatar[i].rotation = thisFrameRot[i];
             //allChildrenDelayedAvatar[i].localScale = allChildrenTrackedAvatar[i].localScale;
         }
 
         yield break;
     }
+
+
+    private void NoiseMovement(float _sigma = 0.015f, float _lamda=0.9f)
+    {
+        /// <summary>
+        /// The incongurence movement implementation in Brugada-Ramentol et al., Consciousness and Cognition '19
+        /// </summary>>
+        float noise = Helpers.RandomGaussian(_sigma * -3, _sigma * 3);
+        Vector3 r = new Vector3(noise, noise, noise); // Gaussian random noise ~ N(0, sigma)
+        for (int i = 0; i < allChildrenTrackedAvatar.Length; i++)
+        {
+            allChildrenAsyncAvatar[i].position = _lamda * allChildrenTrackedAvatar[i].position +
+                (1 - _lamda) * (lastFrameAsyncPos[i] + (allChildrenTrackedAvatar[i].position - lastFrameTrackedPos[i]) + r);
+
+        }
+    }
+
 }

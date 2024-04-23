@@ -80,19 +80,19 @@ public class QuestionnaireController : MonoBehaviour
         r06 = new QuestionnaireData("P" + participantID.ToString(), "I felt like I was wearing different clothes from when I came to the laboratory.");
         /// <summary>
         /// R7 allows for experiment specifics to customize the question based on the independent variable of the study.
-        /// i.e. if a specific body swaporif athreat isinvolved, such as, “I felt as if my body was older” or “I felt as if my hand was attacked.”
+        /// i.e. if a specific body swaporif athreat isinvolved, such as, ?I felt as if my body was older? or ?I felt as if my hand was attacked.?
         /// </summary>
         r07 = new QuestionnaireData("P" + participantID.ToString(), "I felt as if my body had changed.");
 
         /// <summary>
-        /// R8 and R9 can be adapted to non-threat situations such as “I felt a realistic sensation in my body when I saw my hand”
-        /// or “I felt that my own body could have been affected by the virtual world.”
+        /// R8 and R9 can be adapted to non-threat situations such as ?I felt a realistic sensation in my body when I saw my hand?
+        /// or ?I felt that my own body could have been affected by the virtual world.?
         /// </summary>
         r08 = new QuestionnaireData("P" + participantID.ToString(), "I felt a realistic sensation in my body when I saw my body.");
         r09 = new QuestionnaireData("P" + participantID.ToString(), "I felt that my own body could be affected by the virtual world.");
 
         r10 = new QuestionnaireData("P" + participantID.ToString(), "I felt as if the virtual body was my body.");
-        r11 = new QuestionnaireData("P" + participantID.ToString(), "At some point it felt that the virtual body resembled my own (real) body, in terms of shape, skin tone or other visual features.");
+        r11 = new QuestionnaireData("P" + participantID.ToString(), "At some point it felt that the virtual body resembled my own (real) body in terms of shape skin tone or other visual features.");
         r12 = new QuestionnaireData("P" + participantID.ToString(), "I felt as if my body was located where I saw the virtual body.");
         r13 = new QuestionnaireData("P" + participantID.ToString(), "I felt like I could control the virtual body as if it was my own body.");
 
@@ -103,18 +103,24 @@ public class QuestionnaireController : MonoBehaviour
         //r15 = new QuestionnaireData("P" + participantID.ToString(), "Q15.\tIt seemed as if the touch I felt was caused by the floor touching the virtual feet.");
         //r16 = new QuestionnaireData("P" + participantID.ToString(), "Q16.\t It seemed as if my feet was touching the virtual floor.");
 
-        items.Add(sl01);
-        items.Add(sl02);
-        items.Add(sl03);
-        items.Add(sl04);
-        items.Add(pa01);
-        items.Add(pa02);
-        items.Add(pa05);
-        items.Add(pa08);
-        responses = new List<int> { 0, 0, 0, 0, 0, 0, 0, 0 };
+        items.Add(r01);
+        items.Add(r02);
+        items.Add(r03);
+        items.Add(r04);
+        items.Add(r05);
+        items.Add(r06);
+        items.Add(r07);
+        items.Add(r08);
+        items.Add(r09);
+        items.Add(r10);
+        items.Add(r11);
+        items.Add(r12);
+        items.Add(r13);
+
+        responses = new List<int> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         Helpers.Shuffle(items);
         currentItem = 0;
-        currentScale = 3;
+        currentScale = 4;
         currentScaleGO = scales[currentScale - 1];
         smallInstruction.text = "";
         largeInstruction.text = "Press A to Start.";
@@ -127,7 +133,8 @@ public class QuestionnaireController : MonoBehaviour
     {
         if (!isStart)
         {
-            if (OVRInput.GetUp(OVRInput.Button.One, OVRInput.Controller.RTouch)) //(Input.GetKeyDown(KeyCode.A))
+            if (OVRInput.GetUp(OVRInput.Button.One, OVRInput.Controller.RTouch))
+            //if (Input.GetKeyDown(KeyCode.A))
             {
                 if (!isEnd)
                 {
@@ -135,7 +142,7 @@ public class QuestionnaireController : MonoBehaviour
                     mainText.text = items[currentItem].item;
                     scale.SetActive(true);
                     currentScaleGO.SetActive(true);
-                    smallInstruction.text = (currentItem + 1).ToString("F0") + "/8";
+                    smallInstruction.text = (currentItem + 1).ToString("F0") + "/13";
                     largeInstruction.text = "Use Left/Right to select a response and press A to confrim.";
                 }
             }
@@ -143,7 +150,8 @@ public class QuestionnaireController : MonoBehaviour
         else
         {
             // collecting questionnaire data
-            if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickLeft, OVRInput.Controller.RTouch)) //(Input.GetKeyDown(KeyCode.LeftArrow))
+            if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickLeft, OVRInput.Controller.RTouch))
+            //if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 if (currentScale > 1)
                 {
@@ -153,9 +161,10 @@ public class QuestionnaireController : MonoBehaviour
                     currentScaleGO = scales[currentScale - 1];
                 }
             }
-            else if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickRight, OVRInput.Controller.RTouch)) // (Input.GetKeyDown(KeyCode.RightArrow))
+            else if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickRight, OVRInput.Controller.RTouch))
+            //else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
-                if (currentScale < 5)
+                if (currentScale < 7)
                 {
                     currentScaleGO.SetActive(false);
                     currentScale += 1;
@@ -163,9 +172,10 @@ public class QuestionnaireController : MonoBehaviour
                     currentScaleGO = scales[currentScale - 1];
                 }
             }
-            else if (OVRInput.GetUp(OVRInput.Button.One, OVRInput.Controller.RTouch)) // (Input.GetKeyDown(KeyCode.A))
+            else if (OVRInput.GetUp(OVRInput.Button.One, OVRInput.Controller.RTouch))
+            //else if (Input.GetKeyDown(KeyCode.A))
             {
-                if (currentItem < 8)
+                if (currentItem < 13)
                 {
                     responses[currentItem] = currentScale;
                     currentScaleGO.SetActive(false);
@@ -176,9 +186,9 @@ public class QuestionnaireController : MonoBehaviour
                     if (!isAllowedCheck)
                     {
                         currentItem += 1;
-                        if (currentItem < 7)
+                        if (currentItem < 12)
                         {
-                            currentScale = 3;
+                            currentScale = 4;
                             currentScaleGO = scales[currentScale - 1];
                         }
                     }
@@ -191,17 +201,17 @@ public class QuestionnaireController : MonoBehaviour
                     }
                     currentScaleGO.SetActive(true);
 
-                    if (currentItem < 8)
+                    if (currentItem < 13)
                     {
                         mainText.text = items[currentItem].item;
-                        smallInstruction.text = (currentItem + 1).ToString("F0") + "/8";
+                        smallInstruction.text = (currentItem + 1).ToString("F0") + "/13";
                     }
                     else
                     {
-                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + currentItem.ToString("F0") + "/8";
+                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + currentItem.ToString("F0") + "/13";
                         largeInstruction.text = "Use Up/Down to check your responses and Press B to end the test.";
                         isAllowedCheck = true;
-                        currentItem = 7;
+                        currentItem = 12;
                     }
                 }
             }
@@ -209,12 +219,13 @@ public class QuestionnaireController : MonoBehaviour
             if (isAllowedCheck)
             {
                 // once fill out everything
-                if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickUp, OVRInput.Controller.RTouch)) //(Input.GetKeyDown(KeyCode.UpArrow))
+                if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickUp, OVRInput.Controller.RTouch))
+                //if (Input.GetKeyDown(KeyCode.UpArrow))
                 {
                     if (currentItem > 0)
                     {
                         currentItem -= 1;
-                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + (currentItem + 1).ToString("F0") + "/8";
+                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + (currentItem + 1).ToString("F0") + "/13";
                         mainText.text = items[currentItem].item;
                         foreach (var s in scales) s.SetActive(false);
                         scales[responses[currentItem] - 1].SetActive(true);
@@ -222,12 +233,13 @@ public class QuestionnaireController : MonoBehaviour
                         currentScaleGO = scales[responses[currentItem] - 1];
                     }
                 }
-                else if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickDown, OVRInput.Controller.RTouch)) // (Input.GetKeyDown(KeyCode.DownArrow))
+                else if (OVRInput.GetUp(OVRInput.Button.PrimaryThumbstickDown, OVRInput.Controller.RTouch))
+                //else if (Input.GetKeyDown(KeyCode.DownArrow))
                 {
-                    if (currentItem < 7)
+                    if (currentItem < 12)
                     {
                         currentItem += 1;
-                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + (currentItem + 1).ToString("F0") + "/8";
+                        smallInstruction.text = "Use Left/Right to select a response and press A to confrim.\n" + (currentItem + 1).ToString("F0") + "/13";
                         mainText.text = items[currentItem].item;
                         foreach (var s in scales) s.SetActive(false);
                         scales[responses[currentItem] - 1].SetActive(true);
@@ -236,7 +248,8 @@ public class QuestionnaireController : MonoBehaviour
                     }
 
                 }
-                else if (OVRInput.GetUp(OVRInput.Button.Two, OVRInput.Controller.RTouch)) // (Input.GetKeyDown(KeyCode.B))
+                else if (OVRInput.GetUp(OVRInput.Button.Two, OVRInput.Controller.RTouch))
+                //else if (Input.GetKeyDown(KeyCode.B))
                 {
                     StartCoroutine(WriteQuestionnaireData());
                     Debug.LogWarning("End, Write data");
@@ -256,7 +269,7 @@ public class QuestionnaireController : MonoBehaviour
         questionnaireWriter.Write("ParticipantID" + "," +
                                   "Item" + "," +
                                   "Response" + "\n");
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 13; i++)
         {
             questionnaireWriter.Write(items[i].participantID + "," +
                                         items[i].item + "," +
@@ -311,7 +324,7 @@ public static class Helpers
 #endif
     }
 
-    public static float RandomGaussian(float minValue = 0.0f, float maxValue = 1.0f)
+    public static float RandomGaussian(float minValue = 0f, float maxValue = 1.0f)
     {
         //https://discussions.unity.com/t/normal-distribution-random/66530/4
         float u, v, S;

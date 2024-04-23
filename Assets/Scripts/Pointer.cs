@@ -41,7 +41,17 @@ public class Pointer : MonoBehaviour
             {
                 avatarController.avatarMovements = AvatarController.AvatarMovements.Prerecorded;
             }
+            else if (other.name == "Noise")
+            {
+                avatarController.avatarMovements = AvatarController.AvatarMovements.Noise;
+            }
             AvatarController.switchAvatarMovement = true;
         }
+        else if (other.tag == "DelayUI")
+        {
+            avatarController.delayedTime = float.Parse(other.name);
+            avatarController.changeDelayTime = true;
+        }
+        
     }
 }
