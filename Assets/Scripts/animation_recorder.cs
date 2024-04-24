@@ -1,162 +1,163 @@
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.Animations;
+//using UnityEngine;
+//using UnityEditor;
 
-public class AnimationRecorder : MonoBehaviour
-{
-    // references of this script
-    // https://bootcamp.uxdesign.cc/animation-recorder-unitys-hidden-feature-4153c0b8706f
-    // https://pastebin.com/Y2k4AWdp
-    GameObjectRecorder _recorder;
+////using UnityEditor.Animations;
 
-    #region Inspector Variables
+//public class AnimationRecorder : MonoBehaviour
+//{
+//    // references of this script
+//    // https://bootcamp.uxdesign.cc/animation-recorder-unitys-hidden-feature-4153c0b8706f
+//    // https://pastebin.com/Y2k4AWdp
+//    GameObjectRecorder _recorder;
 
-    [Tooltip("Must start with Assets/")]
-    [SerializeField] string _saveFolderLocation = "Assets/Animations/";
+//    #region Inspector Variables
 
-    [SerializeField] string _clipName;
-    [SerializeField] float _frameRate = 15f;
+//    [Tooltip("Must start with Assets/")]
+//    [SerializeField] string _saveFolderLocation = "Assets/Animations/";
 
-    [Header("Key Bindings")] 
-    [SerializeField] string _startRecKey = "i";
-    [SerializeField] string _stopRecKey = "o";
-    [SerializeField] string _deleteRecKey = "p";
-    [Tooltip("ONLY USE WHEN ALL RELATED ASSETS ARE DELETED FROM ASSETS FOLDER")]
-    [SerializeField] string _deleteIndexKey = "l";
+//    [SerializeField] string _clipName;
+//    [SerializeField] float _frameRate = 15f;
 
-    #endregion 
+//    [Header("Key Bindings")] 
+//    [SerializeField] string _startRecKey = "i";
+//    [SerializeField] string _stopRecKey = "o";
+//    [SerializeField] string _deleteRecKey = "p";
+//    [Tooltip("ONLY USE WHEN ALL RELATED ASSETS ARE DELETED FROM ASSETS FOLDER")]
+//    [SerializeField] string _deleteIndexKey = "l";
 
-    private AnimationClip _clip;
-    private AnimationClip _currentClip;
-    private bool _canRecord = true;
-    private int _index;
-    private string _currentClipName;
+//    #endregion
 
-    private void OnEnable()
-    {
-        if(_clip == null)
-        {
-            CreateNewClip();
-        }
+//    private AnimationClip _clip;
+//    private AnimationClip _currentClip;
+//    private bool _canRecord = true;
+//    private int _index;
+//    private string _currentClipName;
 
-        var savedIndex = PlayerPrefs.GetInt(gameObject.name + "Index");
+//    private void OnEnable()
+//    {
+//        if(_clip == null)
+//        {
+//            CreateNewClip();
+//        }
 
-        if ( savedIndex != 0)
-        {
-            _index = savedIndex;
-        }
-    }
+//        var savedIndex = PlayerPrefs.GetInt(gameObject.name + "Index");
 
-    void Start()
-    {
-        _recorder = new GameObjectRecorder(gameObject);
-        _recorder.BindComponentsOfType<Transform>(gameObject, true);
+//        if ( savedIndex != 0)
+//        {
+//            _index = savedIndex;
+//        }
+//    }
 
-        if (_clipName == "")
-        {
-            _clipName = gameObject.name + "_animation";
-        }
+//    void Start()
+//    {
+//        _recorder = new GameObjectRecorder(gameObject);
+//        _recorder.BindComponentsOfType<Transform>(gameObject, true);
 
-    }
+//        if (_clipName == "")
+//        {
+//            _clipName = gameObject.name + "_animation";
+//        }
 
-    private void Update()
-    {
-        ControllerInputs();
-    }
+//    }
 
-    private void ControllerInputs()
-    {
-        if (Input.GetKeyDown(_startRecKey))
-        {
-            StartRecording();
-        }
+//    private void Update()
+//    {
+//        ControllerInputs();
+//    }
 
-        if (Input.GetKeyDown(_stopRecKey))
-        {
-            StopRecording();
-        }
+//    private void ControllerInputs()
+//    {
+//        if (Input.GetKeyDown(_startRecKey))
+//        {
+//            StartRecording();
+//        }
 
-        if (Input.GetKeyDown(_deleteRecKey))
-        {
-            DeleteRecording();
-        }
+//        if (Input.GetKeyDown(_stopRecKey))
+//        {
+//            StopRecording();
+//        }
 
-        //reset index if all clips have been deleted from the assets
-        //ONLY USE IF ALL ASSETS HAVE BEEN DELETED
-        if (Input.GetKey(_deleteIndexKey))
-        {
-            PlayerPrefs.DeleteKey(gameObject.name + "Index");
-            Debug.LogWarning("Clip name indexing has been reset");
-            _index = 0;
-        }
-    }
+//        if (Input.GetKeyDown(_deleteRecKey))
+//        {
+//            DeleteRecording();
+//        }
 
-    private void StartRecording()
-    {
-        _canRecord = true;
-        CreateNewClip();
-        Debug.Log("Animation Recording for " + gameObject.name + " has STARTED");
-    }
+//        //reset index if all clips have been deleted from the assets
+//        //ONLY USE IF ALL ASSETS HAVE BEEN DELETED
+//        if (Input.GetKey(_deleteIndexKey))
+//        {
+//            PlayerPrefs.DeleteKey(gameObject.name + "Index");
+//            Debug.LogWarning("Clip name indexing has been reset");
+//            _index = 0;
+//        }
+//    }
 
-    private void StopRecording()
-    {
-        Debug.Log("Animation Recording for " + gameObject.name + " has STOPPED");
+//    private void StartRecording()
+//    {
+//        _canRecord = true;
+//        CreateNewClip();
+//        Debug.Log("Animation Recording for " + gameObject.name + " has STARTED");
+//    }
 
-        _canRecord = false;
+//    private void StopRecording()
+//    {
+//        Debug.Log("Animation Recording for " + gameObject.name + " has STOPPED");
 
-        _recorder.SaveToClip(_currentClip);
+//        _canRecord = false;
 
-        AssetDatabase.CreateAsset(_currentClip, _saveFolderLocation + _currentClipName + ".anim");
+//        _recorder.SaveToClip(_currentClip);
 
-        AssetDatabase.SaveAssets();
-    }
+//        AssetDatabase.CreateAsset(_currentClip, _saveFolderLocation + _currentClipName + ".anim");
 
-    private void DeleteRecording()
-    {
-        if (_canRecord)
-        {
-            Debug.LogWarning("Cannot delete when recording!");
-            return;
-        }
+//        AssetDatabase.SaveAssets();
+//    }
 
-        if (!AssetDatabase.Contains(_currentClip))
-        {
-            Debug.LogWarning("Clip Has not been saved yet.");
-            return;
-        }
-        AssetDatabase.DeleteAsset(_saveFolderLocation + _currentClipName + ".anim");
-        Debug.Log("Clip has been DELETED");
+//    private void DeleteRecording()
+//    {
+//        if (_canRecord)
+//        {
+//            Debug.LogWarning("Cannot delete when recording!");
+//            return;
+//        }
+
+//        if (!AssetDatabase.Contains(_currentClip))
+//        {
+//            Debug.LogWarning("Clip Has not been saved yet.");
+//            return;
+//        }
+//        AssetDatabase.DeleteAsset(_saveFolderLocation + _currentClipName + ".anim");
+//        Debug.Log("Clip has been DELETED");
     
-    }
+//    }
 
-    private void LateUpdate()
-    {
-        if (_clip == null) return;
+//    private void LateUpdate()
+//    {
+//        if (_clip == null) return;
 
-        if(_canRecord)
-        {
-            _recorder.TakeSnapshot(Time.deltaTime);
-        }
-    }
+//        if(_canRecord)
+//        {
+//            _recorder.TakeSnapshot(Time.deltaTime);
+//        }
+//    }
 
-    private void CreateNewClip()
-    {
-        _clip = new AnimationClip();
+//    private void CreateNewClip()
+//    {
+//        _clip = new AnimationClip();
 
-        if (_clip.name.Contains(_clip.name))
-        {
-            _clip.name = _clipName + " " + (_index++);
-            _currentClipName = _clip.name;
-        }
+//        if (_clip.name.Contains(_clip.name))
+//        {
+//            _clip.name = _clipName + " " + (_index++);
+//            _currentClipName = _clip.name;
+//        }
 
-        _clip.frameRate = _frameRate;
+//        _clip.frameRate = _frameRate;
 
-        _currentClip = _clip;
-    }
+//        _currentClip = _clip;
+//    }
 
-    private void OnDisable()
-    {
-        PlayerPrefs.SetInt(gameObject.name + "Index", _index);
-    }
+//    private void OnDisable()
+//    {
+//        PlayerPrefs.SetInt(gameObject.name + "Index", _index);
+//    }
 
-}
+//}

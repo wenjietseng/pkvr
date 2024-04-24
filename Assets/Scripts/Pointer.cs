@@ -5,20 +5,29 @@ using UnityEngine;
 
 public class Pointer : MonoBehaviour
 {
+    public enum WhichHand { Left = 0, Right = 1};
+    public WhichHand whichHand;
     public GameObject syncAvatar;
     Transform indexTip;
-    public AvatarController avatarController;
+    AvatarController avatarController;
 
     void Start()
     {
-        
+        avatarController = GameObject.Find("ScirptsController").GetComponent<AvatarController>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (indexTip == null) indexTip = syncAvatar.transform.FindChildRecursive("FullBody_LeftHandIndexTip").transform;
-        transform.position = indexTip.position;
+        if (indexTip == null)
+        {
+            string indexTipName = (whichHand == WhichHand.Left) ? "FullBody_LeftHandIndexTip" : "FullBody_RightHandIndexTip";
+            indexTip = syncAvatar.transform.FindChildRecursive(indexTipName).transform;
+        }
+        else
+        {
+            transform.position = indexTip.position;
+        }
     }
 
     private void OnTriggerEnter(Collider other)

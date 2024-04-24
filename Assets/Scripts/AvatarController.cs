@@ -34,17 +34,13 @@ public class AvatarController : MonoBehaviour
     public bool changeDelayTime;
 
     [Header("Brownian Motion")]
-    public bool isAsyncAvatar;
-    bool areBonesCreated;
     public GameObject bmEffect;
 
     [Header("Noise")]
     public float lamda = 0.9f; // parameter lamda determines the weight of the present location in favor of the noisy virtual location.
     public float sigma = 0.015f;
     List<Vector3> lastFrameTrackedPos = new List<Vector3>();
-    List<Quaternion> lastFrameTrackedRot = new List<Quaternion>();
     List<Vector3> lastFrameAsyncPos = new List<Vector3>();
-    List<Quaternion> lastFrameAsyncRot = new List<Quaternion>();
 
     void Start()
     {
@@ -55,15 +51,18 @@ public class AvatarController : MonoBehaviour
         asyncAvatarSMRs = asyncAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
         asyncAvatar.SetActive(false);
         delayedBtns.SetActive(false);
-
     }
-
 
     void Update()
     {
         if (switchAvatarMovement)
         {
             switchAvatarMovement = false;
+            // get BM back to normal
+
+            bmEffect.transform.position = Vector3.zero;
+            bmEffect.GetComponent<BrownianMotion>().enabled = false;
+
             if (avatarMovements == AvatarMovements.Sync)
             {
                 syncBtn.GetComponent<Renderer>().material = selectedBlue;
@@ -91,7 +90,6 @@ public class AvatarController : MonoBehaviour
             }
             else if (avatarMovements == AvatarMovements.BrownianMotion)
             {
-
                 syncBtn.GetComponent<Renderer>().material = unselectedWhite;
                 delayedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 bmBtn.GetComponent<Renderer>().material = selectedBlue;
@@ -101,6 +99,39 @@ public class AvatarController : MonoBehaviour
                 asyncAvatar.SetActive(false);
                 delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
+
+
+                bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
+
+                GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandWrist").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandThumbProximal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandThumbDistal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandThumbTip").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandIndexProximal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandIndexIntermediate").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandIndexDistal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandIndexTip").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandMiddleProximal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandMiddleDistal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandMiddleTip").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandRingMetacarpal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandRingProximal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandRingIntermediate").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandRingDistal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandRingTip").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandLittleProximal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandLittleIntermediate").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandLittleDistal").transform.SetParent(bmEffect.transform);
+                GameObject.Find("FullBody_RightHandLittleTip").transform.SetParent(bmEffect.transform);
+
+
+                bmEffect.GetComponent<BrownianMotion>().enabled = true;
             }
             else if (avatarMovements == AvatarMovements.Prerecorded)
             {
@@ -127,9 +158,7 @@ public class AvatarController : MonoBehaviour
                 foreach (var t in syncAvatarSMRs) t.enabled = false;
 
                 lastFrameTrackedPos = new List<Vector3>();
-                lastFrameTrackedRot = new List<Quaternion>();
                 lastFrameAsyncPos = new List<Vector3>();
-                lastFrameAsyncRot = new List<Quaternion>();
 
             }
         }
@@ -145,42 +174,10 @@ public class AvatarController : MonoBehaviour
 
         if (avatarMovements == AvatarMovements.Noise) NoiseMovement(sigma, lamda);
 
-        /// <summary>
-        /// below is for brownian movement, need to tweak the values and polish code
-        /// </summary>
-            //if (!areBonesCreated)
-            //{
-            //    GameObject bonesGO = GameObject.Find("Bones");
-            //    bmEffect.transform.SetParent(bonesGO.transform);
-            //    GameObject.Find("FullBody_LeftHandPalm").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandWrist").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandThumbProximal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandThumbDistal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandThumbTip").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandIndexProximal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandIndexIntermediate").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandIndexDistal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandIndexTip").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandMiddleProximal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandMiddleDistal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandMiddleTip").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandRingMetacarpal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandRingProximal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandRingIntermediate").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandRingDistal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandRingTip").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandLittleProximal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandLittleIntermediate").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandLittleDistal").transform.SetParent(bmEffect.transform);
-            //    GameObject.Find("FullBody_LeftHandLittleTip").transform.SetParent(bmEffect.transform);
-            //    Debug.LogWarning("Bones are found");
-            //    areBonesCreated = true;
-            //}
+        
+
+
+
     }
 
     private void LateUpdate()
