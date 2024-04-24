@@ -39,8 +39,10 @@ public class AvatarController : MonoBehaviour
     [Header("Noise")]
     public float lamda = 0.9f; // parameter lamda determines the weight of the present location in favor of the noisy virtual location.
     public float sigma = 0.015f;
-    List<Vector3> lastFrameTrackedPos = new List<Vector3>();
-    List<Vector3> lastFrameAsyncPos = new List<Vector3>();
+    //List<Vector3> lastFrameTrackedPos = new List<Vector3>();
+    //List<Vector3> lastFrameAsyncPos = new List<Vector3>();
+    Vector3 lastFrameRealHand;
+    Vector3 lastFrameAsyncHand;
 
     void Start()
     {
@@ -101,6 +103,7 @@ public class AvatarController : MonoBehaviour
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
 
 
+                
                 bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
 
                 GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
@@ -154,11 +157,14 @@ public class AvatarController : MonoBehaviour
                 prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 noiseBtn.GetComponent<Renderer>().material = selectedBlue;
 
-                asyncAvatar.SetActive(true);
-                foreach (var t in syncAvatarSMRs) t.enabled = false;
+                asyncAvatar.SetActive(false);
+                delayedBtns.SetActive(false);
+                foreach (var t in syncAvatarSMRs) t.enabled = true;
 
-                lastFrameTrackedPos = new List<Vector3>();
-                lastFrameAsyncPos = new List<Vector3>();
+                //lastFrameTrackedPos = new List<Vector3>();
+                //lastFrameAsyncPos = new List<Vector3>();
+                lastFrameRealHand  = Vector3.zero;
+                lastFrameAsyncHand = Vector3.zero;
 
             }
         }
@@ -185,15 +191,17 @@ public class AvatarController : MonoBehaviour
         if (avatarMovements == AvatarMovements.Delayed) StartCoroutine(DelayedAvatar(delayedTime));
         if (avatarMovements == AvatarMovements.Noise)
         {
-            foreach (var t in allChildrenTrackedAvatar)
-            {
-                lastFrameTrackedPos.Add(t.position);
-            }
+            //foreach (var t in allChildrenTrackedAvatar)
+            //{
+            //    lastFrameTrackedPos.Add(t.position);
+            //}
 
-            foreach (var t in allChildrenAsyncAvatar)
-            {
-                lastFrameAsyncPos.Add(t.position);
-            }
+            //foreach (var t in allChildrenAsyncAvatar)
+            //{
+            //    lastFrameAsyncPos.Add(t.position);
+            //}
+            lastFrameRealHand = bmEffect.transform.position;
+            lastFrameAsyncHand = syncAvatar.transform.Find("FullBody_RightHandWrist").transform.position;
         }
     }
 
@@ -241,8 +249,10 @@ public class AvatarController : MonoBehaviour
         Vector3 r = new Vector3(noise, noise, noise); // Gaussian random noise ~ N(0, sigma)
         for (int i = 0; i < allChildrenTrackedAvatar.Length; i++)
         {
-            allChildrenAsyncAvatar[i].position = _lamda * allChildrenTrackedAvatar[i].position +
-                (1 - _lamda) * (lastFrameAsyncPos[i] + (allChildrenTrackedAvatar[i].position - lastFrameTrackedPos[i]) + r);
+            //allChildrenAsyncAvatar[i].position = _lamda * allChildrenTrackedAvatar[i].position +
+            //    (1 - _lamda) * (lastFrameAsyncPos[i] + (allChildrenTrackedAvatar[i].position - lastFrameTrackedPos[i]) + r);
+            bmEffect.transform.position = _lamda * bmEffect.transform.position +
+                (1 - _lamda) * (lastFrameAsyncHand + (bmEffect.transform.position - lastFrameRealHand) + r);
 
         }
     }
