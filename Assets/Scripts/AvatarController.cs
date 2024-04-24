@@ -72,9 +72,9 @@ public class AvatarController : MonoBehaviour
                 bmBtn.GetComponent<Renderer>().material = unselectedWhite;
                 prerecordedBtn.GetComponent<Renderer>().material = unselectedWhite;
                 noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
+
                 asyncAvatar.SetActive(false);
                 delayedBtns.SetActive(false);
-
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
             }
             else if (avatarMovements == AvatarMovements.Delayed)
@@ -86,8 +86,8 @@ public class AvatarController : MonoBehaviour
                 noiseBtn.GetComponent<Renderer>().material = unselectedWhite;
 
                 asyncAvatar.SetActive(true);
-                foreach (var t in syncAvatarSMRs) t.enabled = false;
                 delayedBtns.SetActive(true);
+                foreach (var t in syncAvatarSMRs) t.enabled = false;
 
             }
             else if (avatarMovements == AvatarMovements.BrownianMotion)
@@ -102,8 +102,6 @@ public class AvatarController : MonoBehaviour
                 delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
 
-
-                
                 bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
 
                 GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
@@ -201,7 +199,8 @@ public class AvatarController : MonoBehaviour
             //    lastFrameAsyncPos.Add(t.position);
             //}
             lastFrameRealHand = bmEffect.transform.position;
-            lastFrameAsyncHand = syncAvatar.transform.Find("FullBody_RightHandWrist").transform.position;
+            lastFrameAsyncHand = bmEffect.transform.Find("FullBody_RightHandWrist").transform.position;
+            Debug.Log(1);
         }
     }
 
@@ -247,14 +246,14 @@ public class AvatarController : MonoBehaviour
         /// </summary>>
         float noise = Helpers.RandomGaussian(_sigma * -3, _sigma * 3);
         Vector3 r = new Vector3(noise, noise, noise); // Gaussian random noise ~ N(0, sigma)
-        for (int i = 0; i < allChildrenTrackedAvatar.Length; i++)
-        {
+        //for (int i = 0; i < allChildrenTrackedAvatar.Length; i++)
+        //{
             //allChildrenAsyncAvatar[i].position = _lamda * allChildrenTrackedAvatar[i].position +
             //    (1 - _lamda) * (lastFrameAsyncPos[i] + (allChildrenTrackedAvatar[i].position - lastFrameTrackedPos[i]) + r);
+        //}
             bmEffect.transform.position = _lamda * bmEffect.transform.position +
                 (1 - _lamda) * (lastFrameAsyncHand + (bmEffect.transform.position - lastFrameRealHand) + r);
 
-        }
     }
 
 }
