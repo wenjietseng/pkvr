@@ -1,7 +1,10 @@
 using Klak.Motion;
+using Oculus.Platform.Models;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 
 public class AvatarController : MonoBehaviour
 {
@@ -43,6 +46,7 @@ public class AvatarController : MonoBehaviour
     //List<Vector3> lastFrameAsyncPos = new List<Vector3>();
     Vector3 lastFrameRealHand;
     Vector3 lastFrameAsyncHand;
+    public float speed = 0.01f;
 
     void Start()
     {
@@ -62,7 +66,7 @@ public class AvatarController : MonoBehaviour
             switchAvatarMovement = false;
             // get BM back to normal
 
-            bmEffect.transform.position = Vector3.zero;
+            bmEffect.transform.localPosition = Vector3.zero;
             bmEffect.GetComponent<BrownianMotion>().enabled = false;
 
             if (avatarMovements == AvatarMovements.Sync)
@@ -102,37 +106,11 @@ public class AvatarController : MonoBehaviour
                 delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
 
-                bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
+                if (bmEffect.transform.parent == null)
+                {
+                    AssignNoiseParent();
+                }
 
-                GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandWrist").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandThumbProximal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandThumbDistal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandThumbTip").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandIndexProximal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandIndexIntermediate").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandIndexDistal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandIndexTip").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandMiddleProximal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandMiddleDistal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandMiddleTip").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandRingMetacarpal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandRingProximal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandRingIntermediate").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandRingDistal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandRingTip").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandLittleProximal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandLittleIntermediate").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandLittleDistal").transform.SetParent(bmEffect.transform);
-                GameObject.Find("FullBody_RightHandLittleTip").transform.SetParent(bmEffect.transform);
-
-
-                bmEffect.GetComponent<BrownianMotion>().enabled = true;
             }
             else if (avatarMovements == AvatarMovements.Prerecorded)
             {
@@ -159,6 +137,11 @@ public class AvatarController : MonoBehaviour
                 delayedBtns.SetActive(false);
                 foreach (var t in syncAvatarSMRs) t.enabled = true;
 
+                if (bmEffect.transform.parent == null)
+                {
+                    AssignNoiseParent();
+                }
+
                 //lastFrameTrackedPos = new List<Vector3>();
                 //lastFrameAsyncPos = new List<Vector3>();
                 lastFrameRealHand  = Vector3.zero;
@@ -176,13 +159,16 @@ public class AvatarController : MonoBehaviour
             StartCoroutine(HideAsyncAvatar(4f));
         }
 
-        if (avatarMovements == AvatarMovements.Noise) NoiseMovement(sigma, lamda);
+        if (avatarMovements == AvatarMovements.Noise) StartCoroutine(NoiseMovement(sigma, lamda));
 
         
 
 
 
     }
+
+
+
 
     private void LateUpdate()
     {
@@ -198,12 +184,47 @@ public class AvatarController : MonoBehaviour
             //{
             //    lastFrameAsyncPos.Add(t.position);
             //}
-            lastFrameRealHand = bmEffect.transform.position;
-            lastFrameAsyncHand = bmEffect.transform.Find("FullBody_RightHandWrist").transform.position;
-            Debug.Log(1);
+            lastFrameRealHand = bmEffect.transform.Find("FullBody_RightHandWrist").transform.localPosition;
+            lastFrameAsyncHand = bmEffect.transform.Find("FullBody_RightHandWrist").transform.position; // include the offset of bmEffect
+            //Debug.Log(1);
         }
     }
 
+
+    private void AssignNoiseParent()
+    {
+        bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
+
+        GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandWrist").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandThumbMetacarpal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandThumbProximal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandThumbDistal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandThumbTip").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandIndexMetacarpal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandIndexProximal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandIndexIntermediate").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandIndexDistal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandIndexTip").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandMiddleMetacarpal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandMiddleProximal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandMiddleIntermediate").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandMiddleDistal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandMiddleTip").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandRingMetacarpal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandRingProximal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandRingIntermediate").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandRingDistal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandRingTip").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandLittleMetacarpal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandLittleProximal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandLittleIntermediate").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandLittleDistal").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandLittleTip").transform.SetParent(bmEffect.transform);
+
+
+        bmEffect.GetComponent<BrownianMotion>().enabled = true;
+    }
     private IEnumerator HideAsyncAvatar(float _duration)
     {
         foreach (var t in asyncAvatarSMRs) t.enabled = false;
@@ -239,7 +260,7 @@ public class AvatarController : MonoBehaviour
     }
 
 
-    private void NoiseMovement(float _sigma = 0.015f, float _lamda=0.9f)
+    private IEnumerator NoiseMovement(float _sigma = 0.015f, float _lamda=0.9f)
     {
         /// <summary>
         /// The incongurence movement implementation in Brugada-Ramentol et al., Consciousness and Cognition '19
@@ -251,8 +272,20 @@ public class AvatarController : MonoBehaviour
             //allChildrenAsyncAvatar[i].position = _lamda * allChildrenTrackedAvatar[i].position +
             //    (1 - _lamda) * (lastFrameAsyncPos[i] + (allChildrenTrackedAvatar[i].position - lastFrameTrackedPos[i]) + r);
         //}
-            bmEffect.transform.position = _lamda * bmEffect.transform.position +
-                (1 - _lamda) * (lastFrameAsyncHand + (bmEffect.transform.position - lastFrameRealHand) + r);
+        Vector3 newPos = _lamda * bmEffect.transform.Find("FullBody_RightHandWrist").transform.localPosition +
+                (1 - _lamda) * (lastFrameAsyncHand + (bmEffect.transform.Find("FullBody_RightHandWrist").transform.localPosition - lastFrameRealHand) + r);
+
+        Vector3 destination = newPos - bmEffect.transform.Find("FullBody_RightHandWrist").transform.localPosition;
+        float totalMovementTime = 0.5f; //the amount of time you want the movement to take
+        float currentMovementTime = 0f;//The amount of time that has passed
+        // assign offset back to bmEffect
+        while (Vector3.Distance(bmEffect.transform.localPosition, destination) > 0)
+        {
+            currentMovementTime += Time.deltaTime;
+            bmEffect.transform.localPosition = Vector3.Lerp(bmEffect.transform.localPosition, destination, currentMovementTime / totalMovementTime);
+            yield return null;
+        }
+        yield break;
 
     }
 
