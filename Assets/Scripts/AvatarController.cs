@@ -195,6 +195,13 @@ public class AvatarController : MonoBehaviour
     {
         bmEffect.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
 
+        GameObject.Find("FullBody_RightShoulder").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightScapula").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightArmUpper").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightArmLower").transform.SetParent(bmEffect.transform);
+        GameObject.Find("FullBody_RightHandWristTwist").transform.SetParent(bmEffect.transform);
+
+
         GameObject.Find("FullBody_RightHandPalm").transform.SetParent(bmEffect.transform);
         GameObject.Find("FullBody_RightHandWrist").transform.SetParent(bmEffect.transform);
         GameObject.Find("FullBody_RightHandThumbMetacarpal").transform.SetParent(bmEffect.transform);

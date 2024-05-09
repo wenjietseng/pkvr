@@ -4676,7 +4676,7 @@ MonoBehaviour:
   bmBtn: {fileID: 1408164936}
   prerecordedBtn: {fileID: 137517683}
   noiseBtn: {fileID: 33530098}
-  syncAvatar: {fileID: 1005747085}
+  syncAvatar: {fileID: 0}
   asyncAvatar: {fileID: 478760581}
   trackingAvatar: {fileID: 88897621}
   delayedAvatar: {fileID: 1430456398}
