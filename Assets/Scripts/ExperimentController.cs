@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Klak.Motion;
+using UnityEngine.UIElements;
 
 public class ExperimentController : MonoBehaviour
 {
     [Header("Participant Info")]
     public int participantID = 0;
-    public enum GenderMatchedAvatar { Men = 0, Women = 1 };
+    public enum GenderMatchedAvatar { female = 0, male = 1 };
     public GenderMatchedAvatar genderMatchedAvatar;
 
     [Header("Conditions")]
@@ -27,115 +29,306 @@ public class ExperimentController : MonoBehaviour
     public VisuomotorType vmType;
     public int currentConditionNum;
     public float currentTime;
-    private const float exposureDuration = 18f;
-    private bool isAvatarRunning;
-    private bool isQuestionnaireRunning;
-    private bool isSwappedAvatars;
     public bool isQuestionnaireDone;
 
+    private bool isAvatarRunning;
+    private bool isQuestionnaireRunning;
+    private const float exposureDuration = 10f;
 
-    //[Header("Avatars")]
+    [Header("Avatars")]
+    public GameObject femaleAvatar;
+    public GameObject maleAvatar;
+    public GameObject syncAvatar;
+    private SkinnedMeshRenderer[] syncAvatarSMRs;
+    // for async avatar
+    public GameObject leftArmBM;
+    public GameObject rightArmBM;
 
-    //[Header("Questionnaire")]
+    [Header("Procedure")]
+    public GameObject pointer;
+    public GameObject startBox;
+    public GameObject mainInstructionsCanvas;
+    public TMP_Text mainInstructions;
+    // in fact we only need one controller lol
+    public GameObject leftController;
+    public GameObject rightController;
     private QuestionnaireController questionnaireController;
-
+    public bool isStartFlagOn;
+    private bool isCountDown;
 
 
     void Start()
     {
+        startBox.SetActive(false);
+        pointer.GetComponent<Renderer>().enabled = false;
+
+        syncAvatar = (genderMatchedAvatar == GenderMatchedAvatar.female) ? femaleAvatar : maleAvatar;
+        if (genderMatchedAvatar == GenderMatchedAvatar.female) maleAvatar.SetActive(false);
+        else femaleAvatar.SetActive(false);
+
+        // get mesh renderers for transitions between avatar (hand tracking) and controllers
+        syncAvatarSMRs = syncAvatar.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+        leftArmBM.transform.localPosition = Vector3.zero;
+        leftArmBM.GetComponent<BrownianMotion>().enabled = false;
+        rightArmBM.transform.localPosition = Vector3.zero;
+        rightArmBM.GetComponent<BrownianMotion>().enabled = false;
+
         // enable the gender matched avatar
         questionnaireController = this.GetComponent<QuestionnaireController>();
         PrepareCondition();
+        foreach (var t in syncAvatarSMRs) t.enabled = false;
 
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.S))
+
+        if (Input.GetKeyDown(KeyCode.Q))
         {
-            // when start the experiment, we need to consider how to switch controller and hand tracking...
-            // show avatar
-            currentTime = 0f;
-            isAvatarRunning = true;
-            Debug.LogWarning("Please add instructions for the avatar part to a UI.");
-            isSwappedAvatars = false;
         }
 
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+        }
 
+        if (Input.GetKeyDown(KeyCode.S) || isStartFlagOn)
+        {
+            isStartFlagOn = false;
+            startBox.SetActive(false);
+            pointer.GetComponent<Renderer>().enabled = false;
+            StartCoroutine(StartCondition());
+        }
+        else
+        {
+            if (OVRPlugin.GetHandTrackingEnabled() && !isCountDown && !isAvatarRunning && !isQuestionnaireRunning)
+            {
+                // switch between controller and hand tracking.
+                startBox.SetActive(true);
+                pointer.GetComponent<Renderer>().enabled = true;
+            }
+        }
+
+        //Debug.LogWarning(OVRPlugin.GetHandTrackingEnabled() + "hand");
+        // holding controllers --> false
+        // untracked like occlusion --> false
+        // hands in front of the HMD --> true
 
         if (currentConditionNum < 4)
         {
+            if (isCountDown)
+            {
+                currentTime += Time.deltaTime;
+                mainInstructions.text = "The study will begin in " + (3f - currentTime).ToString("F1");
+            }
+            // switch from controllers to hands
+
             if (isAvatarRunning)
             { 
-
                 currentTime += Time.deltaTime;
 
                 // difference between the four conditions.
                 if (currentTime < exposureDuration)
-                {
-                    if (vmType == VisuomotorType.Async_begin || vmType == VisuomotorType.Async_end)
+                {                
+                    if (vmType == VisuomotorType.Sync)
+                    {
+
+                    }
+                    else if (vmType == VisuomotorType.Async)
+                    {
+                        if (leftArmBM.transform.parent == null) AssignLBMParent();
+                        if (rightArmBM.transform.parent == null) AssignRBMParent();
+
+                        if (!leftArmBM.GetComponent<BrownianMotion>().enabled)
+                            leftArmBM.GetComponent<BrownianMotion>().enabled = true;
+                        
+                        if (!rightArmBM.GetComponent<BrownianMotion>().enabled)
+                            rightArmBM.GetComponent<BrownianMotion>().enabled = true;
+                    }
+                    else if (vmType == VisuomotorType.Async_begin)
                     {
                         if (currentTime < (exposureDuration / 2))
                         {
-                            Debug.LogWarning("first avatar");
+                            if (leftArmBM.transform.parent == null) AssignLBMParent();
+                            if (rightArmBM.transform.parent == null) AssignRBMParent();
+
+                            if (!leftArmBM.GetComponent<BrownianMotion>().enabled)
+                                leftArmBM.GetComponent<BrownianMotion>().enabled = true;
+
+                            if (!rightArmBM.GetComponent<BrownianMotion>().enabled)
+                                rightArmBM.GetComponent<BrownianMotion>().enabled = true;
                         }
                         else
                         {
-                            if (!isSwappedAvatars)
+                            if (leftArmBM.GetComponent<BrownianMotion>().enabled)
                             {
-                                isSwappedAvatars = true;
-                                // swapp avatar for async/sync.
-                                
+                                leftArmBM.transform.localPosition = Vector3.zero;
+                                leftArmBM.GetComponent<BrownianMotion>().enabled = false;
                             }
-
-                            if (isSwappedAvatars) Debug.LogWarning("swapped avatar in the a_begin or a_end conditions.");
+                            if (rightArmBM.GetComponent<BrownianMotion>().enabled)
+                            {
+                                rightArmBM.transform.localPosition = Vector3.zero;
+                                rightArmBM.GetComponent<BrownianMotion>().enabled = false;
+                            }
                         }
-
                     }
-                    else // A or S will show either async or sync avatar.
+                    else if (vmType == VisuomotorType.Async_end)
                     {
-                        Debug.LogWarning("We don't do anything here");
+                        if ((exposureDuration / 2) < currentTime)
+                        {
+                            if (leftArmBM.transform.parent == null) AssignLBMParent();
+                            if (rightArmBM.transform.parent == null) AssignRBMParent();
+
+                            if (!leftArmBM.GetComponent<BrownianMotion>().enabled)
+                                leftArmBM.GetComponent<BrownianMotion>().enabled = true;
+
+                            if (!rightArmBM.GetComponent<BrownianMotion>().enabled)
+                                rightArmBM.GetComponent<BrownianMotion>().enabled = true;
+                        }
                     }
                 }
                 else
                 {
-                    isAvatarRunning = false;
+                    if (leftArmBM.GetComponent<BrownianMotion>().enabled)
+                    {
+                        leftArmBM.transform.localPosition = Vector3.zero;
+                        leftArmBM.GetComponent<BrownianMotion>().enabled = false;
+                    }
+                    if (rightArmBM.GetComponent<BrownianMotion>().enabled)
+                    {
+                        rightArmBM.transform.localPosition = Vector3.zero;
+                        rightArmBM.GetComponent<BrownianMotion>().enabled = false;
+                    }
+
                     // stop showing avatar, disable avatars
+                    foreach (var t in syncAvatarSMRs) t.enabled = false;
+
+                    // enable questionnaire gameobjects
+                    isAvatarRunning = false;
                     isQuestionnaireRunning = true;
                     questionnaireController.questionnaireCanvas.SetActive(true);
                     questionnaireController.InitializeQuestionnaire();
-                    // enable questionnaire gameobjects
-                    // instruct the participant to pick up controllers
+                    mainInstructionsCanvas.SetActive(false);
+                    // highlight the position of the right controller, if needed
                 }
-
             }
-
 
             if (isQuestionnaireRunning)
             {
                 currentTime += Time.deltaTime;
 
-                if (Input.GetKeyDown(KeyCode.Q) || isQuestionnaireDone)
+                if (isQuestionnaireDone)
                 {
+                    // reset variables of the avatar and questionnaire part
                     isQuestionnaireDone = false;
-                    Debug.LogWarning("Question is done");
+                    Debug.LogWarning("Questionnaire is done");
                     questionnaireController.questionnaireCanvas.SetActive(false);
                     isQuestionnaireRunning = false;
                     currentConditionNum += 1;
+                    currentTime = 0f;
                     PrepareCondition();
-                    // Write data
-                    // reset variables of the avatar and questionnaire part
+                    mainInstructionsCanvas.SetActive(true);
+                    mainInstructions.text = "Please put down your controllers. A pink dot will spawn close to your right index finger for starting the study.";
                 }
-
-
             }
         }
         else
         {
             Debug.LogWarning("The end.");
+
+            mainInstructions.text = "The end!";
         }
     }
 
+    IEnumerator StartCondition()
+    {
+        Debug.LogWarning("Start the current condition!");
+        isCountDown = true;
+
+        yield return new WaitForSeconds(3f);
+
+        isCountDown = false;
+        currentTime = 0f;
+        isAvatarRunning = true;
+        mainInstructions.text = "Please stand still, move your arms freely, and look down.";
+        foreach (var t in syncAvatarSMRs) t.enabled = true;
+
+        yield return 0;
+    }
+
+    private void AssignLBMParent()
+    {
+        leftArmBM.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
+
+        GameObject.Find("FullBody_LeftShoulder").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftScapula").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftArmUpper").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftArmLower").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandWristTwist").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandPalm").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandWrist").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandThumbMetacarpal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandThumbProximal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandThumbDistal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandThumbTip").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandIndexMetacarpal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandIndexProximal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandIndexIntermediate").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandIndexDistal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandIndexTip").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandMiddleMetacarpal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandMiddleProximal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandMiddleIntermediate").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandMiddleDistal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandMiddleTip").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandRingMetacarpal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandRingProximal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandRingIntermediate").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandRingDistal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandRingTip").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandLittleMetacarpal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandLittleProximal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandLittleIntermediate").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandLittleDistal").transform.SetParent(leftArmBM.transform);
+        GameObject.Find("FullBody_LeftHandLittleTip").transform.SetParent(leftArmBM.transform);
+    }
+
+    private void AssignRBMParent()
+    {
+        rightArmBM.transform.SetParent(syncAvatar.transform.Find("Bones").transform);
+
+        GameObject.Find("FullBody_RightShoulder").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightScapula").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightArmUpper").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightArmLower").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandWristTwist").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandPalm").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandWrist").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandThumbMetacarpal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandThumbProximal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandThumbDistal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandThumbTip").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandIndexMetacarpal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandIndexProximal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandIndexIntermediate").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandIndexDistal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandIndexTip").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandMiddleMetacarpal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandMiddleProximal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandMiddleIntermediate").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandMiddleDistal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandMiddleTip").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandRingMetacarpal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandRingProximal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandRingIntermediate").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandRingDistal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandRingTip").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandLittleMetacarpal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandLittleProximal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandLittleIntermediate").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandLittleDistal").transform.SetParent(rightArmBM.transform);
+        GameObject.Find("FullBody_RightHandLittleTip").transform.SetParent(rightArmBM.transform);
+    }
 
     private void PrepareCondition()
     {

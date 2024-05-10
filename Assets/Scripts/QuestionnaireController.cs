@@ -55,13 +55,13 @@ public class QuestionnaireController : MonoBehaviour
                 if (!isEnd)
                 {
                     isStart = true;
-                    mainText.text = items[currentItem].item;
+                    mainText.text = items[currentItem].item; // seems to have an error? ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.
                     lowAnchorText.text = items[currentItem].lowAnchor;
                     highAnchorText.text = items[currentItem].highAnchor;
                     scale.SetActive(true);
                     currentScaleGO.SetActive(true);
                     smallInstruction.text = (currentItem + 1).ToString("F0") + "/" + items.Count;
-                    largeInstruction.text = "Use Left/Right to select a response and press A to confrim.";
+                    largeInstruction.text = "Use your right controller: Left/Right to select a response and press A to confrim.";
                 }
             }
         }
