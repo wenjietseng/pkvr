@@ -5,15 +5,9 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/_Scenes/Main(testingAsync).unity
-    guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 0
-    path: Assets/_Scenes/Questionnaire.unity
-    guid: 63a835cce7e0ee9419bfa68a70ce5733
   - enabled: 1
-    path: Assets/_Scenes/Test for avatar.unity
-    guid: 2187b83a253a147f2b0f777dddafde68
+    path: Assets/_Scenes/ExpV0.unity
+    guid: 3458e3f89023844f0a0c1758a1a5a4e8
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 9b66d25da937b4c2e9e028bb362c54e1, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 9ea3df3fd596c4013a8aa5872082556a, type: 2}

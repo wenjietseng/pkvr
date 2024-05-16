@@ -33,7 +33,7 @@ public class ExperimentController : MonoBehaviour
 
     private bool isAvatarRunning;
     private bool isQuestionnaireRunning;
-    private const float exposureDuration = 10f;
+    public float exposureDuration = 180f;
 
     [Header("Avatars")]
     public GameObject femaleAvatar;
@@ -119,7 +119,7 @@ public class ExperimentController : MonoBehaviour
             if (isCountDown)
             {
                 currentTime += Time.deltaTime;
-                mainInstructions.text = "The study will begin in " + (3f - currentTime).ToString("F1");
+                mainInstructions.text = "The study will begin in " + (3f - currentTime).ToString("F0");
             }
             // switch from controllers to hands
 
