@@ -119,7 +119,7 @@ public class ExperimentController : MonoBehaviour
             if (isCountDown)
             {
                 currentTime += Time.deltaTime;
-                mainInstructions.text = "The study will begin in " + (3f - currentTime).ToString("F0");
+                mainInstructions.text = "Stretch out your arms for calibration. The study will begin in " + (5f - currentTime).ToString("F0");
             }
             // switch from controllers to hands
 
@@ -242,10 +242,11 @@ public class ExperimentController : MonoBehaviour
 
     IEnumerator StartCondition()
     {
-        Debug.LogWarning("Start the current condition!");
+        //Debug.LogWarning("Start the current condition!");
         isCountDown = true;
+        OVRPlugin.ResetBodyTrackingCalibration();
 
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
 
         isCountDown = false;
         currentTime = 0f;
