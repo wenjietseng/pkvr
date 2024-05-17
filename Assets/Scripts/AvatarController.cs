@@ -48,6 +48,7 @@ public class AvatarController : MonoBehaviour
     Vector3 lastFrameAsyncHand;
     public float speed = 0.01f;
 
+
     void Start()
     {
         bmEffect.GetComponent<BrownianMotion>().enabled = false;
@@ -61,6 +62,15 @@ public class AvatarController : MonoBehaviour
 
     void Update()
     {
+        if (OVRInput.GetUp(OVRInput.Button.One, OVRInput.Controller.RTouch))
+        {
+            OVRPlugin.ResetBodyTrackingCalibration();
+        }
+
+
+
+
+
         if (switchAvatarMovement)
         {
             switchAvatarMovement = false;
