@@ -920,8 +920,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Please put down your controllers. A pink dot will spawn close to your right
-    index finger for starting the study.
+  m_text: Please put down your controllers. Touch the start with the pink dot. Once
+    start, stretch out your arms for calibration.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5409,7 +5409,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5610f285ceeb54d278c493f9ef86369d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  participantID: 1
+  participantID: 4
   genderMatchedAvatar: 1
   layoutBlockNum: 0
   vmType: 0

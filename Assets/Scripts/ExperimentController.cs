@@ -228,7 +228,7 @@ public class ExperimentController : MonoBehaviour
                     currentTime = 0f;
                     PrepareCondition();
                     mainInstructionsCanvas.SetActive(true);
-                    mainInstructions.text = "Please put down your controllers. A pink dot will spawn close to your right index finger for starting the study.";
+                    mainInstructions.text = "Please put down your controllers. Touch the start with the pink dot. Once start, stretch out your arms for calibration.";
                 }
             }
         }
@@ -247,6 +247,8 @@ public class ExperimentController : MonoBehaviour
         OVRPlugin.ResetBodyTrackingCalibration();
 
         yield return new WaitForSeconds(5f);
+
+        OVRPlugin.ResetBodyTrackingCalibration();
 
         isCountDown = false;
         currentTime = 0f;
